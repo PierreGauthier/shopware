@@ -1,0 +1,20 @@
+backport:
+  extends: .base-with-node
+  # stage: .post
+  stage: lint
+  variables:
+    GIT_STRATEGY: none
+  before_script: []
+  rules:
+    - if: '$CI_MERGE_REQUEST_LABELS =~ /.*backport-6\.5\.x.*/'
+      when: manual
+      variables:
+        BACKPORT_BRANCH: '6.5.x'
+  script:
+    - npm install -g @kie/git-backporting
+    - 'MR_URL="${CI_MERGE_REQUEST_PROJECT_URL}/-/merge_requests/${CI_MERGE_REQUEST_IID}"'
+    - 'MR_API_URL="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/merge_requests/${CI_MERGE_REQUEST_IID}"'
+    - git-backporting -tb ${BACKPORT_BRANCH} -pr $MR_URL -a "${CI_GITLAB_API_TOKEN}" --labels backport --comments "Backport of $MR_URL"
+    # - 'COMMENT="Backport MR to ${BACKPORT_BRANCH}: "'
+    # - >
+    #   curl -X POST -H "Private-Token: ${CI_GITLAB_API_TOKEN}" -H 'Content-Type: application/json' -d "{\"body\": \"$COMMENT\"}" $MR_API_URL/notes --insecure;
